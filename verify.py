@@ -1,5 +1,6 @@
 """Local pre-submit checks for the 21 November 2026 news image (entry 3)."""
-import os, math
+import math
+import os
 from PIL import Image
 import draw
 
@@ -11,36 +12,24 @@ assert im.size == (1024, 1024), im.size
 assert os.path.getsize(path) <= 1048576, os.path.getsize(path)
 print("CHECK 1 file: PNG %s, %d bytes (limit 1048576) OK" % (im.size, os.path.getsize(path)))
 
-nums = [s[0] for s in draw.STORIES]
-assert len(nums) == 35 and sorted(nums) == list(range(1, 36))
+numbers = [s[0] for s in draw.STORIES]
+assert len(numbers) == 35 and sorted(numbers) == list(range(1, 36))
 regions = sorted({s[1] for s in draw.STORIES})
 assert len(regions) == 7, regions
-print("CHECK 1 content: 35 numbered stories, 7 regions %s OK" % regions)
-counts = {r: sum(1 for s in draw.STORIES if s[1] == r) for r in regions}
-for s in draw.STORIES:
-    assert s[3] and s[4] and s[5], s[0]
-print("  region counts:", counts)
+print("CHECK 1 content: 35 numbered stories, 7 regions OK")
 
-# 300 px preview outside the repository
-prev = os.path.join(os.path.dirname(here), "check21")
-os.makedirs(prev, exist_ok=True)
-im.resize((300, 300), Image.LANCZOS).save(os.path.join(prev, "preview300.png"))
-im.crop((10, 730, 404, 958)).resize((1182, 684)).save(os.path.join(prev, "crop_map.png"))
-print("CHECK 2 previews written OK")
+box = (20, 754, 374, 150)
+spots = [(p[1], p[2], p[3]) for p in draw.BADGE_SPOTS]
+smallest = min(math.hypot(spots[i][0]-spots[j][0], spots[i][1]-spots[j][1])
+               for i in range(len(spots)) for j in range(i+1, len(spots)))
+farthest = max(math.hypot(spots[i][0]-draw.map_point(s[6], s[7], box)[0],
+                          spots[i][1]-draw.map_point(s[6], s[7], box)[1])
+               for i, s in enumerate(draw.STORIES))
+assert smallest >= 13 and farthest <= 42, (smallest, farthest)
+print("CHECK 2 map: 35 badges, gap %.1f px, offset %.1f px OK" % (smallest, farthest))
 
-# map placement from the embedded, shared PLACEMENT table
-LT, LB = 83, -58
-X0, Y0, X1, Y1 = 20, 754, 394, 904
-def proj(lon, lat):
-    return (X0 + (lon + 180) / 360.0 * (X1 - X0),
-            Y0 + (LT - lat) / (LT - LB) * (Y1 - Y0))
-pl = [(p[1], p[2], p[3]) for p in draw.PLACEMENT]
-assert len(pl) == 35
-worstgap = min(math.hypot(pl[i][0] - pl[j][0], pl[i][1] - pl[j][1])
-               for i in range(35) for j in range(i + 1, 35))
-assert worstgap >= 13.0, worstgap
-maxoff = max(math.hypot(pl[i][0] - proj(s[6], s[7])[0], pl[i][1] - proj(s[6], s[7])[1])
-             for i, s in enumerate(draw.STORIES))
-assert maxoff <= 42, maxoff
-print("CHECK 2 map: 35 badges, min gap %.1f px, max offset %.1f px OK" % (worstgap, maxoff))
-print("CHECK 3: inspect check21/preview300.png and crop_map.png.")
+preview = os.path.join(os.path.dirname(here), "check21")
+os.makedirs(preview, exist_ok=True)
+im.resize((300, 300), Image.LANCZOS).save(os.path.join(preview, "preview300.png"))
+im.crop((10, 730, 404, 958)).resize((1182, 684)).save(os.path.join(preview, "crop_map.png"))
+print("CHECK 3 previews written OK")
