@@ -1,3 +1,7 @@
+*.tar.gz
 __pycache__/
 out/
+out2/
 *.pyc
+world110.geojson
+sp.txt
