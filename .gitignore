@@ -1,7 +1,10 @@
-*.tar.gz
-__pycache__/
+# Runtime build artefacts
 out/
 out2/
+__pycache__/
 *.pyc
+*.tar.gz
+
+# Build-only inputs, kept in entry3_dev outside this repository
 world110.geojson
 sp.txt
